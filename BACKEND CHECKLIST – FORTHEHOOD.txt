@@ -1,0 +1,290 @@
+✅ BACKEND CHECKLIST – FORTHEHOOD
+1️⃣ XÁC ĐỊNH NGHIỆP VỤ
+
+✅ ADMIN
+
+Tạo tài khoản EMPLOYEE
+
+Quản lý sản phẩm
+
+Quản lý đơn hàng
+
+Quản lý khách hàng
+
+✅ EMPLOYEE
+
+Xử lý đơn hàng
+
+Cập nhật trạng thái đơn
+
+✅ CUSTOMER
+
+Guest: xem sản phẩm
+
+Có tài khoản: mua hàng
+
+❌ Customer KHÔNG tạo employee
+❌ Employee KHÔNG tạo tài khoản
+
+👉 Logic này phải phản ánh đúng trong Security + Service
+
+2️⃣ DATABASE DESIGN
+
+✅ roles
+✅ accounts
+✅ customers
+✅ employees
+✅ categories
+✅ products
+✅ orders
+✅ order_items
+
+🔐 Account & Role
+
+roles
+| field | note                        |
+| ----- | --------------------------- |
+| id    | PK                          |
+| name  | ADMIN / EMPLOYEE / CUSTOMER |
+
+accounts
+| field      | note            |
+| ---------- | --------------- |
+| id         | PK              |
+| email      | unique          |
+| password   | mã hóa          |
+| role_id    | FK → roles      |
+| status     | ACTIVE / LOCKED |
+| created_at |                 |
+
+
+👤 Customer
+
+customers
+| field      | note |
+| ---------- | ---- |
+| id         | PK   |
+| account_id | FK   |
+| name       |      |
+| phone      |      |
+| address    |      |
+
+
+🧑‍💼 Employee
+
+employees
+| field      | note     |
+| ---------- | -------- |
+| id         | PK       |
+| account_id | FK       |
+| name       |          |
+| position   |          |
+| created_by | admin_id |
+
+
+🛒 Product & Category
+
+categories
+
+| id | name | status |
+
+products
+| field       | note |
+| ----------- | ---- |
+| id          | PK   |
+| name        |      |
+| price       |      |
+| stock       |      |
+| category_id | FK   |
+| status      |      |
+
+
+📦 Order
+
+orders
+| field       | note                     |
+| ----------- | ------------------------ |
+| id          | PK                       |
+| customer_id | FK                       |
+| total_price |                          |
+| status      | PENDING / PAID / SHIPPED |
+| created_at  |                          |
+
+
+order_items
+
+| id | order_id | product_id | quantity | price |
+
+
+👉 Quan hệ:
+
+role 1–n account
+
+account 1–1 customer / employee
+
+customer 1–n orders
+
+order 1–n order_items
+
+category 1–n products
+
+3️⃣ ENTITY LAYER (JPA)
+
+⬜ RoleEntity
+⬜ AccountEntity
+⬜ CustomerEntity
+⬜ EmployeeEntity
+⬜ CategoryEntity
+⬜ ProductEntity
+⬜ OrderEntity
+⬜ OrderItemEntity
+
+⬜ Enum:
+
+RoleName (ADMIN, EMPLOYEE, CUSTOMER)
+
+AccountStatus (ACTIVE, LOCKED)
+
+OrderStatus (PENDING, PAID, SHIPPED)
+
+⬜ Mapping chuẩn:
+
+@OneToMany
+
+@ManyToOne
+
+@OneToOne
+
+@JoinColumn
+
+fetch = LAZY
+
+4️⃣ REPOSITORY LAYER
+
+⬜ RoleRepository
+⬜ AccountRepository
+⬜ CustomerRepository
+⬜ EmployeeRepository
+⬜ ProductRepository
+⬜ CategoryRepository
+⬜ OrderRepository
+⬜ OrderItemRepository
+
+⬜ Custom query:
+
+findByEmail
+
+findByRole
+
+findOrdersByCustomerId
+
+5️⃣ SERVICE LAYER (CORE – QUAN TRỌNG NHẤT)
+
+⬜ AuthService
+
+login()
+
+registerCustomer()
+
+⬜ AccountService
+
+adminCreateEmployee()
+
+lockAccount()
+
+⬜ ProductService
+
+createProduct()
+
+updateProduct()
+
+getProductList()
+
+⬜ OrderService
+
+createOrder()
+
+updateOrderStatus()
+
+getOrdersByCustomer()
+
+⬜ CategoryService
+
+👉 Toàn bộ business rule PHẢI nằm ở đây
+❌ Controller không xử lý logic
+
+6️⃣ SPRING SECURITY (BẮT BUỘC – SHOP THẬT)
+
+⬜ BCryptPasswordEncoder
+⬜ UserDetailsService
+⬜ JWT Utils
+⬜ JWT Filter
+⬜ SecurityConfig
+
+⬜ Phân quyền:
+
+/admin/** → ADMIN
+
+/employee/** → EMPLOYEE
+
+/auth/** → PUBLIC
+
+/products/** → PUBLIC
+
+⬜ Không đăng nhập → không mua hàng
+⬜ Employee không gọi API admin
+
+7️⃣ CONTROLLER LAYER
+
+⬜ AuthController
+
+POST /auth/login
+
+POST /auth/register
+
+⬜ AdminController
+
+POST /admin/create-employee
+
+POST /admin/products
+
+⬜ EmployeeController
+
+GET /employee/orders
+
+PUT /employee/orders/{id}
+
+⬜ PublicController
+
+GET /products
+
+GET /categories
+
+⬜ CustomerController
+
+POST /orders
+
+GET /orders/my
+
+8️⃣ DTO & RESPONSE
+
+⬜ Request DTO
+⬜ Response DTO
+⬜ Không trả Entity trực tiếp
+⬜ Chuẩn response cho FE
+
+9️⃣ VALIDATION & EXCEPTION
+
+⬜ @Valid request
+⬜ GlobalExceptionHandler
+⬜ Custom Exception (Unauthorized, NotFound…)
+⬜ HTTP status đúng chuẩn
+
+🔟 TEST & HOÀN THIỆN
+
+⬜ Test login JWT (ADMIN / EMPLOYEE / CUSTOMER)
+⬜ Test phân quyền 401 / 403
+⬜ Test admin tạo employee
+⬜ Test customer đặt hàng
+⬜ Test employee cập nhật đơn
+⬜ Test guest chỉ xem được sản phẩm
