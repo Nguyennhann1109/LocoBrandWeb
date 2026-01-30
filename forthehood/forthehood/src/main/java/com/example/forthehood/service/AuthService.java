@@ -1,5 +1,16 @@
 package com.example.forthehood.service;
 
+import java.time.LocalDateTime;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.example.forthehood.dto.ChangePasswordRequest;
 import com.example.forthehood.dto.LoginRequest;
 import com.example.forthehood.dto.LoginResponse;
 import com.example.forthehood.dto.RegisterCustomerRequest;
@@ -14,15 +25,6 @@ import com.example.forthehood.repository.CustomerRepository;
 import com.example.forthehood.repository.RoleRepository;
 import com.example.forthehood.security.CustomUserDetails;
 import com.example.forthehood.security.JwtUtil;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @Service
 public class AuthService {
@@ -92,5 +94,24 @@ public class AuthService {
         Customer savedCustomer = customerRepository.save(customer);
 
         return new RegisterCustomerResponse(savedCustomer.getId(), savedAccount.getEmail());
+    }
+
+    public void changePassword(ChangePasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            throw new IllegalArgumentException("New password and confirm password do not match");
+        }
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+
+        Account account = accountRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("Account not found for current user"));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), account.getPassword())) {
+            throw new IllegalArgumentException("Old password is incorrect");
+        }
+
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        accountRepository.save(account);
     }
 }

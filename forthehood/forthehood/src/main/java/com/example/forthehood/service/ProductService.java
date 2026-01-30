@@ -27,6 +27,7 @@ public class ProductService {
     public List<ProductResponse> getProductList() {
         List<Product> products = productRepository.findAll();
         return products.stream()
+                .filter(p -> "ACTIVE".equalsIgnoreCase(p.getStatus()))
                 .map(p -> new ProductResponse(
                         p.getId(),
                         p.getName(),
@@ -88,9 +89,11 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) {
-        if (!productRepository.existsById(id)) {
-            throw new IllegalArgumentException("Product not found with id: " + id);
-        }
-        productRepository.deleteById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + id));
+
+        // Soft delete: mark as INACTIVE instead of removing
+        product.setStatus("INACTIVE");
+        productRepository.save(product);
     }
 }

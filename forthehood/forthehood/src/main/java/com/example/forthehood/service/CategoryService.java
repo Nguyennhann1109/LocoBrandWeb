@@ -22,6 +22,7 @@ public class CategoryService {
     public List<CategoryResponse> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
         return categories.stream()
+                .filter(c -> "ACTIVE".equalsIgnoreCase(c.getStatus()))
                 .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getStatus()))
                 .collect(Collectors.toList());
     }
@@ -45,9 +46,11 @@ public class CategoryService {
     }
 
     public void deleteCategory(Long id) {
-        if (!categoryRepository.existsById(id)) {
-            throw new IllegalArgumentException("Category not found with id: " + id);
-        }
-        categoryRepository.deleteById(id);
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + id));
+
+        // Soft delete: mark as INACTIVE instead of removing
+        category.setStatus("INACTIVE");
+        categoryRepository.save(category);
     }
 }
